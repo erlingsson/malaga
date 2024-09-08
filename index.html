@@ -14,8 +14,9 @@
             padding: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            align-items: flex-start;
+            flex-direction: column;
+            min-height: 100vh;
         }
         .container {
             background-color: rgba(255, 255, 255, 0.8);
@@ -23,9 +24,73 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+        }
+        .weather-container {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+        }
+        .info-box {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+        }
+        h1, h2, h3 {
+            color: #333;
         }
         h1 {
-            color: #333;
+            font-size: 24px;
+            color: black;
+        }
+        h2 {
+            color: white;
+        }
+        h3 {
+            font-size: 22px;
+            color: black;
+        }
+        ul {
+            text-align: left;
+            font-size: 18px;
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 8px 0;
+        }
+        li span {
+            font-weight: bold;
+            color: #ff6347;
+        }
+        li span.price {
+            color: #1e90ff;
+        }
+        li:last-child span {
+            color: #32cd32;
+        }
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .weather-day {
+            margin: 10px 0;
+        }
+        .weather-day img {
+            width: 40px;
         }
     </style>
     <script>
@@ -42,8 +107,72 @@
             document.getElementById('countdown').innerText = 'Það eru ' + daysUntil + ' dagar til brottfarar';
         }
 
+        async function fetchWeather() {
+            const url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=36.512&lon=-4.885'; // Marbella, Spain coordinates
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'Malagaveður/1.0 julie.ipsen924@goldfishgateway.com' // Forritsheiti og netfang
+                    }
+                });
+
+                const data = await response.json();
+                const weatherContainer = document.getElementById('weather');
+                const timeseries = data.properties.timeseries;
+
+                const dayNames = ['Sunnudagur', 'Mánudagur', 'Þriðjudagur', 'Miðvikudagur', 'Fimmtudagur', 'Föstudagur', 'Laugardagur'];
+                const monthNames = ['jan', 'feb', 'mar', 'apr', 'maí', 'jún', 'júl', 'ágú', 'sept', 'okt', 'nóv', 'des'];
+
+                let currentDay = null;
+
+                timeseries.forEach((item, index) => {
+                    const date = new Date(item.time);
+                    const day = date.getDate();
+                    const weekday = dayNames[date.getDay()];
+                    const month = monthNames[date.getMonth()];
+
+                    const temperature = item.data.instant.details.air_temperature;
+                    const cloudCoverage = item.data.instant.details.cloud_area_fraction;
+
+                    const fullDate = `${weekday} ${day}. ${month}`;
+
+                    if (fullDate !== currentDay) {
+                        currentDay = fullDate;
+
+                        const dayElement = document.createElement('div');
+                        dayElement.className = 'weather-day';
+
+                        let weatherIcon = '';
+                        if (cloudCoverage < 20) {
+                            weatherIcon = '☀️'; // Sól
+                        } else if (cloudCoverage < 60) {
+                            weatherIcon = '⛅'; // Sól og ský
+                        } else {
+                            weatherIcon = '☁️'; // Skýjað
+                        }
+
+                        const temp = `Hiti: ${temperature}°C`;
+
+                        dayElement.innerHTML = `
+                            <span>${fullDate}</span> ${weatherIcon}
+                            <span>${temp}</span>
+                        `;
+                        weatherContainer.appendChild(dayElement);
+                    }
+
+                    // Limit to the first 10 days (10-day forecast)
+                    if (index >= 9 * 24) return;
+                });
+
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+            }
+        }
+
         window.onload = function() {
             updateCountdown();
+            fetchWeather();
         }
     </script>
 </head>
@@ -51,6 +180,32 @@
     <div class="container">
         <h1>Talið niður til Málaga</h1>
         <p id="countdown"></p>
+    </div>
+    <div class="weather-container">
+        <h2>Veðurspá fyrir Marbella, Spánn (10 dagar)</h2>
+        <div id="weather"></div>
+    </div>
+    <div class="info-box">
+        <h3>🍹 Gott að vita</h3>
+        <ul>
+            <li><span class="emoji">🍺</span>Pinta af bjór á veitingastað: <span class="price">3-5 €</span></li>
+            <li><span class="emoji">🍷</span>Rauðvínsglas: <span class="price">3-4 €</span></li>
+            <li><span class="emoji">🍷</span>Hvítvínsglas: <span class="price">3-4 €</span></li>
+            <li><span class="emoji">🍺</span>Bjór í matvöruverslun: <span class="price">1-2 €</span></li>
+            <li><span class="emoji">🍾</span>Rauðvín í matvöruverslun: <span class="price">3-6 €</span></li>
+            <li><span class="emoji">🍾</span>Hvítvín í matvöruverslun: <span class="price">3-6 €</span></li>
+            <li><span class="emoji">🍹</span>Frozen daiquiri: <span class="price">6-8 €</span></li>
+            <li><span class="emoji">🍸</span>Gin og tonic: <span class="price">6-8 €</span></li>
+            <li><span class="emoji">🍸</span>Margaríta: <span class="price">6-9 €</span></li>
+            <li><span class="emoji">🥃</span>Cuba libre: <span class="price">5-7 €</span></li>
+            <li><span class="emoji">🍕</span>Pítsa á veitingastað: <span class="price">8-12 €</span></li>
+            <li><span class="emoji">🥛</span>Líter af mjólk: <span class="price">0.8-1 €</span></li>
+            <li><span class="emoji">🍼</span>Pakki af bleyjum: <span class="price">7-12 €</span></li>
+            <li><span class="emoji">🧻</span>Pakki af blautþurrkum: <span class="price">1-3 €</span></li>
+            <li><span class="emoji">🦟</span>Moskító sprey: <span class="price">4-6 €</span></li>
+            <li><span class="emoji">🦋</span>Butterfly Park miði: <span class="price">10-15 €</span></li>
+            <li><span class="emoji">👯‍♂️</span>Vika með vinum: <span>Ómetanlegt</span></li>
+        </ul>
     </div>
 </body>
 </html>
