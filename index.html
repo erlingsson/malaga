@@ -147,7 +147,7 @@
                 const weatherContainer = document.getElementById('weather');
                 const timeseries = data.properties.timeseries;
 
-                const dayNames = ['Sunnudagur', 'Mánudagur', 'Þriðjudagur', 'Miðvikudagur', 'Fimmtudagur', 'Föstudagur', 'Laugardagur'];
+                const shortDayNames = ['sun', 'mán', 'þri', 'mið', 'fim', 'fös', 'lau'];
                 const monthNames = ['jan', 'feb', 'mar', 'apr', 'maí', 'jún', 'júl', 'ágú', 'sept', 'okt', 'nóv', 'des'];
 
                 let dailyData = {};
@@ -176,7 +176,7 @@
 
                 Object.values(dailyData).slice(0, 10).forEach((dayData) => {
                     const date = dayData.date;
-                    const dayName = dayNames[date.getDay()];
+                    const dayName = shortDayNames[date.getDay()];
                     const monthName = monthNames[date.getMonth()];
                     const dayOfMonth = date.getDate();
                     const fullDate = `${dayName} ${dayOfMonth}. ${monthName}`;
