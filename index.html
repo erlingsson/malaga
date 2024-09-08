@@ -8,9 +8,9 @@
         body {
             font-family: Arial, sans-serif;
             background-image: url('https://cf.bstatic.com/xdata/images/hotel/max1024x768/469034439.jpg?k=8f176e007be1443c4766ebf9565968a5bd75e2130c0dc284fe81d02bec30bf2b&o=&hp=1');
-            background-size: cover;
-            background-position: center center;
-            background-repeat: no-repeat;
+            background-size: cover; /* Ensures the image fills the screen */
+            background-position: center center; /* Centers the image */
+            background-repeat: no-repeat; /* Prevents the image from repeating */
             margin: 0;
             padding: 0;
             display: flex;
@@ -23,9 +23,10 @@
         /* Media queries for mobile devices */
         @media only screen and (max-width: 768px) {
             body {
-                background-size: contain;
-                background-position: top center;
-                background-attachment: scroll;
+                background-image: url('https://images.unsplash.com/photo-1501436513145-30f24e19fcc8?q=80&w=2520&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+                background-size: cover; /* Fills the mobile screen */
+                background-position: center center;
+                background-attachment: fixed;
             }
         }
 
@@ -118,102 +119,6 @@
             width: 40px;
         }
     </style>
-    <script>
-        function calculateDaysUntil(date) {
-            const today = new Date();
-            const targetDate = new Date(date);
-            const timeDifference = targetDate - today;
-            const daysUntil = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-            return daysUntil;
-        }
-
-        function updateCountdown() {
-            const daysUntil = calculateDaysUntil('September 15, ' + new Date().getFullYear());
-            document.getElementById('countdown').innerText = 'Það eru ' + daysUntil + ' dagar til brottfarar';
-        }
-
-        async function fetchWeather() {
-            const url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=36.512&lon=-4.885'; // Marbella, Spain coordinates
-
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'User-Agent': 'Malagaveður/1.0 julie.ipsen924@goldfishgateway.com'
-                    }
-                });
-
-                const data = await response.json();
-                const weatherContainer = document.getElementById('weather');
-                const timeseries = data.properties.timeseries;
-
-                const dayNames = ['Sunnudagur', 'Mánudagur', 'Þriðjudagur', 'Miðvikudagur', 'Fimmtudagur', 'Föstudagur', 'Laugardagur'];
-                const monthNames = ['jan', 'feb', 'mar', 'apr', 'maí', 'jún', 'júl', 'ágú', 'sept', 'okt', 'nóv', 'des'];
-
-                let dailyData = {};
-
-                timeseries.forEach((item) => {
-                    const date = new Date(item.time);
-                    const day = date.getDate();
-                    const month = date.getMonth();
-                    const year = date.getFullYear();
-                    const dateKey = `${year}-${month}-${day}`;
-
-                    const temperature = item.data.instant.details.air_temperature;
-                    const cloudCoverage = item.data.instant.details.cloud_area_fraction;
-
-                    if (!dailyData[dateKey]) {
-                        dailyData[dateKey] = {
-                            temperatures: [],
-                            cloudCoverage: [],
-                            date: date
-                        };
-                    }
-
-                    dailyData[dateKey].temperatures.push(temperature);
-                    dailyData[dateKey].cloudCoverage.push(cloudCoverage);
-                });
-
-                Object.values(dailyData).slice(0, 10).forEach((dayData) => {
-                    const date = dayData.date;
-                    const dayName = dayNames[date.getDay()];
-                    const monthName = monthNames[date.getMonth()];
-                    const dayOfMonth = date.getDate();
-                    const fullDate = `${dayName} ${dayOfMonth}. ${monthName}`;
-
-                    const maxTemp = Math.max(...dayData.temperatures);
-                    const minTemp = Math.min(...dayData.temperatures);
-                    const avgCloudCoverage = dayData.cloudCoverage.reduce((a, b) => a + b) / dayData.cloudCoverage.length;
-
-                    let weatherIcon = '';
-                    if (avgCloudCoverage < 20) {
-                        weatherIcon = '☀️'; // Sól
-                    } else if (avgCloudCoverage < 60) {
-                        weatherIcon = '⛅'; // Sól og ský
-                    } else {
-                        weatherIcon = '☁️'; // Skýjað
-                    }
-
-                    const tempText = `Há: ${Math.round(maxTemp)}°C / Lág: ${Math.round(minTemp)}°C`;
-
-                    const dayElement = document.createElement('div');
-                    dayElement.className = 'weather-day';
-                    dayElement.innerHTML = `
-                        <span>${fullDate}</span> ${weatherIcon}
-                        <span>${tempText}</span>
-                    `;
-                    weatherContainer.appendChild(dayElement);
-                });
-
-            } catch (error) {
-                console.error('Error fetching weather data:', error);
-            }
-        }
-
-        window.onload = function() {
-            updateCountdown();
-            fetchWeather();
-        }
-    </script>
 </head>
 <body>
     <div class="container">
