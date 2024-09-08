@@ -9,6 +9,7 @@
             font-family: Arial, sans-serif;
             background-image: url('https://cf.bstatic.com/xdata/images/hotel/max1024x768/469034439.jpg?k=8f176e007be1443c4766ebf9565968a5bd75e2130c0dc284fe81d02bec30bf2b&o=&hp=1');
             background-size: cover;
+            background-position: center center;
             background-repeat: no-repeat;
             margin: 0;
             padding: 0;
@@ -18,6 +19,16 @@
             flex-direction: column;
             min-height: 100vh;
         }
+
+        /* Media queries for mobile devices */
+        @media only screen and (max-width: 768px) {
+            body {
+                background-size: contain;
+                background-position: top center;
+                background-attachment: scroll;
+            }
+        }
+
         .container {
             background-color: rgba(255, 255, 255, 0.8);
             padding: 20px;
@@ -28,6 +39,7 @@
             width: 80%;
             max-width: 600px;
         }
+
         .weather-container {
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
@@ -39,6 +51,7 @@
             width: 80%;
             max-width: 600px;
         }
+
         .info-box {
             background-color: rgba(255, 255, 255, 0.9);
             padding: 20px;
@@ -49,46 +62,58 @@
             width: 80%;
             max-width: 600px;
         }
+
         h1, h2, h3 {
             color: #333;
         }
+
         h1 {
             font-size: 24px;
             color: black;
         }
+
         h2 {
             color: white;
         }
+
         h3 {
             font-size: 22px;
             color: black;
         }
+
         ul {
             text-align: left;
             font-size: 18px;
             list-style-type: none;
             padding: 0;
         }
+
         li {
             padding: 8px 0;
         }
+
         li span {
             font-weight: bold;
             color: #ff6347;
         }
+
         li span.price {
             color: #1e90ff;
         }
+
         li:last-child span {
             color: #32cd32;
         }
+
         .emoji {
             font-size: 24px;
             margin-right: 10px;
         }
+
         .weather-day {
             margin: 10px 0;
         }
+
         .weather-day img {
             width: 40px;
         }
@@ -113,7 +138,7 @@
             try {
                 const response = await fetch(url, {
                     headers: {
-                        'User-Agent': 'Malagaveður/1.0 julie.ipsen924@goldfishgateway.com' // Forritsheiti og netfang
+                        'User-Agent': 'Malagaveður/1.0 julie.ipsen924@goldfishgateway.com'
                     }
                 });
 
@@ -124,45 +149,59 @@
                 const dayNames = ['Sunnudagur', 'Mánudagur', 'Þriðjudagur', 'Miðvikudagur', 'Fimmtudagur', 'Föstudagur', 'Laugardagur'];
                 const monthNames = ['jan', 'feb', 'mar', 'apr', 'maí', 'jún', 'júl', 'ágú', 'sept', 'okt', 'nóv', 'des'];
 
-                let currentDay = null;
+                let dailyData = {};
 
-                timeseries.forEach((item, index) => {
+                timeseries.forEach((item) => {
                     const date = new Date(item.time);
                     const day = date.getDate();
-                    const weekday = dayNames[date.getDay()];
-                    const month = monthNames[date.getMonth()];
+                    const month = date.getMonth();
+                    const year = date.getFullYear();
+                    const dateKey = `${year}-${month}-${day}`;
 
                     const temperature = item.data.instant.details.air_temperature;
                     const cloudCoverage = item.data.instant.details.cloud_area_fraction;
 
-                    const fullDate = `${weekday} ${day}. ${month}`;
-
-                    if (fullDate !== currentDay) {
-                        currentDay = fullDate;
-
-                        const dayElement = document.createElement('div');
-                        dayElement.className = 'weather-day';
-
-                        let weatherIcon = '';
-                        if (cloudCoverage < 20) {
-                            weatherIcon = '☀️'; // Sól
-                        } else if (cloudCoverage < 60) {
-                            weatherIcon = '⛅'; // Sól og ský
-                        } else {
-                            weatherIcon = '☁️'; // Skýjað
-                        }
-
-                        const temp = `Hiti: ${temperature}°C`;
-
-                        dayElement.innerHTML = `
-                            <span>${fullDate}</span> ${weatherIcon}
-                            <span>${temp}</span>
-                        `;
-                        weatherContainer.appendChild(dayElement);
+                    if (!dailyData[dateKey]) {
+                        dailyData[dateKey] = {
+                            temperatures: [],
+                            cloudCoverage: [],
+                            date: date
+                        };
                     }
 
-                    // Limit to the first 10 days (10-day forecast)
-                    if (index >= 9 * 24) return;
+                    dailyData[dateKey].temperatures.push(temperature);
+                    dailyData[dateKey].cloudCoverage.push(cloudCoverage);
+                });
+
+                Object.values(dailyData).slice(0, 10).forEach((dayData) => {
+                    const date = dayData.date;
+                    const dayName = dayNames[date.getDay()];
+                    const monthName = monthNames[date.getMonth()];
+                    const dayOfMonth = date.getDate();
+                    const fullDate = `${dayName} ${dayOfMonth}. ${monthName}`;
+
+                    const maxTemp = Math.max(...dayData.temperatures);
+                    const minTemp = Math.min(...dayData.temperatures);
+                    const avgCloudCoverage = dayData.cloudCoverage.reduce((a, b) => a + b) / dayData.cloudCoverage.length;
+
+                    let weatherIcon = '';
+                    if (avgCloudCoverage < 20) {
+                        weatherIcon = '☀️'; // Sól
+                    } else if (avgCloudCoverage < 60) {
+                        weatherIcon = '⛅'; // Sól og ský
+                    } else {
+                        weatherIcon = '☁️'; // Skýjað
+                    }
+
+                    const tempText = `Há: ${Math.round(maxTemp)}°C / Lág: ${Math.round(minTemp)}°C`;
+
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'weather-day';
+                    dayElement.innerHTML = `
+                        <span>${fullDate}</span> ${weatherIcon}
+                        <span>${tempText}</span>
+                    `;
+                    weatherContainer.appendChild(dayElement);
                 });
 
             } catch (error) {
