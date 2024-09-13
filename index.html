@@ -139,7 +139,7 @@
             try {
                 const response = await fetch(url, {
                     headers: {
-                        'User-Agent': 'Malagaveður/1.0 julie.ipsen924@goldfishgateway.com'
+                        'User-Agent': navigator.userAgent // Dynamically set the User-Agent to match the browser
                     }
                 });
 
