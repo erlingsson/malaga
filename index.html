@@ -137,77 +137,99 @@
             const url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=36.512&lon=-4.885'; // Marbella, Spain coordinates
 
             try {
-                const response = await fetch(url, {
-                    headers: {
-                        'User-Agent': navigator.userAgent // Dynamically set the User-Agent to match the browser
-                    }
-                });
-
-                const data = await response.json();
-                const weatherContainer = document.getElementById('weather');
-                const timeseries = data.properties.timeseries;
-
-                const shortDayNames = ['sun', 'mán', 'þri', 'mið', 'fim', 'fös', 'lau'];
-                const monthNames = ['jan', 'feb', 'mar', 'apr', 'maí', 'jún', 'júl', 'ágú', 'sept', 'okt', 'nóv', 'des'];
-
-                let dailyData = {};
-
-                timeseries.forEach((item) => {
-                    const date = new Date(item.time);
-                    const day = date.getDate();
-                    const month = date.getMonth();
-                    const year = date.getFullYear();
-                    const dateKey = `${year}-${month}-${day}`;
-
-                    const temperature = item.data.instant.details.air_temperature;
-                    const cloudCoverage = item.data.instant.details.cloud_area_fraction;
-
-                    if (!dailyData[dateKey]) {
-                        dailyData[dateKey] = {
-                            temperatures: [],
-                            cloudCoverage: [],
-                            date: date
-                        };
-                    }
-
-                    dailyData[dateKey].temperatures.push(temperature);
-                    dailyData[dateKey].cloudCoverage.push(cloudCoverage);
-                });
-
-                Object.values(dailyData).slice(0, 10).forEach((dayData) => {
-                    const date = dayData.date;
-                    const dayName = shortDayNames[date.getDay()];
-                    const monthName = monthNames[date.getMonth()];
-                    const dayOfMonth = date.getDate();
-                    const fullDate = `${dayName} ${dayOfMonth}. ${monthName}`;
-
-                    const maxTemp = Math.max(...dayData.temperatures);
-                    const minTemp = Math.min(...dayData.temperatures);
-                    const avgCloudCoverage = dayData.cloudCoverage.reduce((a, b) => a + b) / dayData.cloudCoverage.length;
-
-                    let weatherIcon = '';
-                    if (avgCloudCoverage < 20) {
-                        weatherIcon = '☀️'; // Sól
-                    } else if (avgCloudCoverage < 60) {
-                        weatherIcon = '⛅'; // Sól og ský
-                    } else {
-                        weatherIcon = '☁️'; // Skýjað
-                    }
-
-                    const tempText = `Há: ${Math.round(maxTemp)}°C / Lág: ${Math.round(minTemp)}°C`;
-
-                    const dayElement = document.createElement('div');
-                    dayElement.className = 'weather-day';
-                    dayElement.innerHTML = `
-                        <span>${fullDate}</span> ${weatherIcon}
-                        <span>${tempText}</span>
-                    `;
-                    weatherContainer.appendChild(dayElement);
-                });
-
+                if (window.fetch) {
+                    // Use fetch API
+                    console.log('Using fetch API');
+                    const response = await fetch(url, {
+                        headers: {
+                            'User-Agent': navigator.userAgent // Dynamically set the User-Agent to match the browser
+                        }
+                    });
+                    const data = await response.json();
+                    displayWeather(data);
+                } else {
+                    // Fallback to XMLHttpRequest if fetch is not supported
+                    console.log('Using XMLHttpRequest as fallback');
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', url, true);
+                    xhr.setRequestHeader('User-Agent', navigator.userAgent);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            const data = JSON.parse(xhr.responseText);
+                            displayWeather(data);
+                        }
+                    };
+                    xhr.onerror = function () {
+                        console.error('Error with XMLHttpRequest');
+                    };
+                    xhr.send();
+                }
             } catch (error) {
                 console.error('Error fetching weather data:', error);
             }
+        }
+
+        function displayWeather(data) {
+            const weatherContainer = document.getElementById('weather');
+            const timeseries = data.properties.timeseries;
+
+            const shortDayNames = ['sun', 'mán', 'þri', 'mið', 'fim', 'fös', 'lau'];
+            const monthNames = ['jan', 'feb', 'mar', 'apr', 'maí', 'jún', 'júl', 'ágú', 'sept', 'okt', 'nóv', 'des'];
+
+            let dailyData = {};
+
+            timeseries.forEach((item) => {
+                const date = new Date(item.time);
+                const day = date.getDate();
+                const month = date.getMonth();
+                const year = date.getFullYear();
+                const dateKey = `${year}-${month}-${day}`;
+
+                const temperature = item.data.instant.details.air_temperature;
+                const cloudCoverage = item.data.instant.details.cloud_area_fraction;
+
+                if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = {
+                        temperatures: [],
+                        cloudCoverage: [],
+                        date: date
+                    };
+                }
+
+                dailyData[dateKey].temperatures.push(temperature);
+                dailyData[dateKey].cloudCoverage.push(cloudCoverage);
+            });
+
+            Object.values(dailyData).slice(0, 10).forEach((dayData) => {
+                const date = dayData.date;
+                const dayName = shortDayNames[date.getDay()];
+                const monthName = monthNames[date.getMonth()];
+                const dayOfMonth = date.getDate();
+                const fullDate = `${dayName} ${dayOfMonth}. ${monthName}`;
+
+                const maxTemp = Math.max(...dayData.temperatures);
+                const minTemp = Math.min(...dayData.temperatures);
+                const avgCloudCoverage = dayData.cloudCoverage.reduce((a, b) => a + b) / dayData.cloudCoverage.length;
+
+                let weatherIcon = '';
+                if (avgCloudCoverage < 20) {
+                    weatherIcon = '☀️'; // Sól
+                } else if (avgCloudCoverage < 60) {
+                    weatherIcon = '⛅'; // Sól og ský
+                } else {
+                    weatherIcon = '☁️'; // Skýjað
+                }
+
+                const tempText = `Há: ${Math.round(maxTemp)}°C / Lág: ${Math.round(minTemp)}°C`;
+
+                const dayElement = document.createElement('div');
+                dayElement.className = 'weather-day';
+                dayElement.innerHTML = `
+                    <span>${fullDate}</span> ${weatherIcon}
+                    <span>${tempText}</span>
+                `;
+                weatherContainer.appendChild(dayElement);
+            });
         }
 
         window.onload = function() {
